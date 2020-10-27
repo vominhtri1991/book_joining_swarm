@@ -1,0 +1,29 @@
+- name: Install Apache And COpy SOurce Test
+  hosts: webserver
+  become: true
+  vars:
+   os_support:
+    - RedHat
+    - Centos
+  tasks:
+   - name: Install HTTPD If Host Is RedHat Or Centos
+     yum:
+      name: httpd
+      state: present
+     when:
+      - ansible_distribution in os_support
+     notify:
+      - restart httpd
+   - name: Copy source web
+     template: 
+      src: index.html
+      dest: /var/www/html/index.html
+      owner: apache
+      group: apache
+      mode: 0755
+
+  handlers:
+   - name: restart httpd
+     service:
+      name: httpd
+      state: restarted

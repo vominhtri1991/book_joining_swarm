@@ -1,0 +1,36 @@
+- name: Add Managed Host To Docker Swarm With Role
+  become: true
+  hosts: all
+  vars:
+   os_support:
+    - RedHat
+    - Centos
+   leader_node: RH-SW01
+   cmd_join: "{{ query('lines','ssh root@RH-SW01 docker swarm join-token '+ROLE)[2] }}"
+  tasks:
+   - name: Install Docker CE And Add Host To Swarm Cluster
+     block:
+      - name: Add repository for docker CE
+        shell: "dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo"
+        ignore_errors: true
+      
+      - name: Install Docker CE
+        shell: "dnf install docker-ce --nobest -y --allowerasing"
+        ignore_errors: true
+      
+      - name: Start Docker Service
+        service:
+          name: docker
+          state: restarted
+          enabled: yes
+     
+      - name: Load command join swarm cluster as manager
+        debug:
+          msg: "{{ cmd_join }}" 
+      
+      - name: Join node to Swarm cluster
+        shell: "{{ cmd_join }}"
+        ignore_errors: true
+           
+     when:
+      - ansible_distribution in os_support
